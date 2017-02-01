@@ -11,6 +11,12 @@ var_location="/var/log/"
 hdfs_location="hadoop/hdfs"
 archive="/tmp/system-logs/hdfs-audit"
 host=`hostname -s`
+keytab_principal="hdfs-CMHDDATALAKE@EXPDEV.LOCAL"
+keytab="/etc/security/keytabs/hdfs.headless.keytab"
+tdate=`date +"%Y-%m-%d"`
+
+printf "Generating hdfs kinit \n"
+kinit -kt $keytab $keytab_principal
 
 cd $var_location$hdfs_location
 
@@ -20,38 +26,39 @@ fi
 
 find . -type f -name "hdfs-audit*" -mtime +0 -exec mv "{}" $archive \;
 if [ $? -ne 0 ]; then
-        echo "ERROR moving files from hdfs logs to archive location. Please check"
-        exit 1;
+	echo "ERROR moving files from hdfs logs to archive location. Please check"
+	exit 1;
 fi
 
 cd $archive
 file_count=`find . -type f | wc -l`
-echo "Archive file count is : $file_count"
-printf "File Archived are :\n`ls`\n"
 
 if [ $file_count -gt 0 ]; then
-        for file in `ls`
-        do
-                if [ -s $file ]; then
-                        #tar -zvcf ${file%.*}-$host.gz $file
-                         tar -zvcf $file-$host.gz $file
-                fi
-        done
+	count=0
+	for file in `ls`
+	do
+		if [ "${file##*.}" != "gz" ] && [ -s $file ]; then
+			 (( count++ ))
+			 tar -zvcf $file-$host.gz $file
+			 rm $file
+    		fi
+	done
 
-        su - <user-name> -c "hdfs dfs -put $archive/*.gz /system-logs/hdfs-audit/."
+	echo "Archive file count is : $count"
+	hdfs dfs -put $archive/*.gz /system-logs/hdfs-audit/.
 
-        if [ $? -ne 0 ]; then
-                echo "ERROR while copying audit logs to hdfs.Please verify."
-                exit 1;
-        fi
+	if [ $? -ne 0 ]; then
+		echo "ERROR while copying audit logs to hdfs.Please verify."
+		exit 1;
+	fi
 
-        cd $archive
-        echo "Deleting files:"
-        for file in `ls`
-        do
-                echo "Deleting $file"
-                rm $file
-        done
+	cd $archive
+	echo "Deleting files:"
+	for file in `ls`
+	do
+		echo "Deleting $file"
+		rm $file
+	done
 else
-        echo "Archive directory ($archive) is empty"
+	echo "Archive directory ($archive) is empty for $tdate"
 fi
