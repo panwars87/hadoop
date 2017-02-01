@@ -1,0 +1,12 @@
+import
+#export
+--connect
+jdbc:mysql://192.168.0.104:3306/classicmodels
+--driver
+com.mysql.jdbc.Driver
+--username 
+root 
+--password-file 
+file:///root/password.txt
+#--verbose
+

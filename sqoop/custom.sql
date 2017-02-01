@@ -1,0 +1,1 @@
+select p.productCode, p.productLine, p.productName, p.buyPrice, p.MSRP, p.productDescription, p.quantityInStock, p.productScale from products p inner join productlines pl on p.productLine = pl.productLine where p.productLine = 'Trains' and $CONDITIONS
