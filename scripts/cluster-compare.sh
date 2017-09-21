@@ -1,5 +1,6 @@
 #!/bin/bash
-#
+# Reference: https://github.com/karthikhw/ambari/blob/master/bin/compare.sh
+# author: Shashant Panwar
 #
 
 usage () {
