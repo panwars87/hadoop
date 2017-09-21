@@ -1,6 +1,7 @@
 #!/bin/bash
 # Reference: https://github.com/karthikhw/ambari/blob/master/bin/compare.sh
 # author: Shashant Panwar
+# Todo: Store the comparision in another file along with storing the configs.
 #
 
 usage () {
