@@ -69,30 +69,34 @@ def get_jobs_by_all(state, user_name, queue):
     exception: Exception, return: None
 '''
 def get_job_details(response):
-    logger.debug('Executing get_job_details')
-    try:
-        json_data_dump = capi.get_response_data(response)
-        if json_data_dump['apps'] is None: return None
-        data_arr = json_data_dump['apps']['app']
-        job_count = 0
-        data_list = list()
-        for key in data_arr:
-            logger.debug('complete application response %s:  ' % key)
-            if key.get('elapsedTime') > int(capi.get_config('check_interval')):
-                logger.debug('A query is running more than an hour, fetching info. Elapsed time: {0}'.format(key.get('elapsedTime')))
-                job_count += 1
-                user_query = get_user_query(key.get('trackingUrl', ''))
-                if user_query == '' or user_query is None:
-                    user_query = key['name']
-                
-                data = {"appId": key['id'], "allocatedMB": key['allocatedMB'], "user": key['user'], "jobCounts": job_count,
-                        "trackingUrl": key['trackingUrl'], "startedTime": key['startedTime'], "userQuery": user_query,
-                        "elapsedTime": key['elapsedTime']};
-                data_list.append(data)
-        return data_list
-    except Exception as e:
-        logger.error('Exception from get_job_details'.format(e.message))
-        raise e
+        logger.debug('Executing get_job_details')
+        try:
+            skip_user_query = "spark"
+            json_data_dump = capi.get_response_data(response)
+            if json_data_dump['apps'] is None: return None
+            data_arr = json_data_dump['apps']['app']
+            job_count = 0
+            data_list = list()
+            for key in data_arr:
+                logger.debug('complete application response %s:  ' % key)
+                if key.get('elapsedTime') > int(capi.get_config('check_interval')):
+                    logger.debug('A query is running more than an hour, fetching info. Elapsed time: {0}'.format(key.get('elapsedTime')))
+                    job_count += 1
+                    data = {"appId": key['id'], "allocatedMB": key['allocatedMB'], "user": key['user'], "jobCounts": job_count,
+                            "trackingUrl": key['trackingUrl'], "startedTime": key['startedTime'], "elapsedTime": key['elapsedTime']};
+                    logger.debug('key name: '+key.get('name').lower())
+                    if skip_user_query not in key.get('name').lower():
+                        user_query = get_user_query(key.get('trackingUrl', ''))
+                        if user_query == '' or user_query is None:
+                            user_query = key['name']
+                        data["user_query"] = user_query
+
+                    data_list.append(data)
+            return data_list
+        except Exception as e:
+            logger.error('Exception from get_job_details'.format(e.message))
+            raise e
+            
 
 ''' Method to fetch job query
     This is little convoluted but only way I can find to parse query from job tracker
