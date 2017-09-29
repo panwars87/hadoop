@@ -80,23 +80,26 @@ def get_job_details(response):
             for key in data_arr:
                 logger.debug('complete application response %s:  ' % key)
                 if key.get('elapsedTime') > int(capi.get_config('check_interval')):
-                    logger.debug('A query is running more than an hour, fetching info. Elapsed time: {0}'.format(key.get('elapsedTime')))
+                    logger.debug('A job is running more than an hour, fetching info. Elapsed time: {0}'.format(key.get('elapsedTime')))
                     job_count += 1
                     data = {"appId": key['id'], "allocatedMB": key['allocatedMB'], "user": key['user'], "jobCounts": job_count,
                             "trackingUrl": key['trackingUrl'], "startedTime": key['startedTime'], "elapsedTime": key['elapsedTime']};
-                    logger.debug('key name: '+key.get('name').lower())
-                    if skip_user_query not in key.get('name').lower():
-                        user_query = get_user_query(key.get('trackingUrl', ''))
-                        if user_query == '' or user_query is None:
-                            user_query = key['name']
-                        data["user_query"] = user_query
+
+                    app_landing_url = capi.get_base_url() + '/cluster/app/' + data.get('appId')
+                    logger.debug('App landing url is: %s', app_landing_url)
+                    data["app_landing_url"] = app_landing_url
+                    # if skip_user_query not in key.get('name').lower():
+                    #     user_query = get_user_query(key.get('trackingUrl', ''))
+                    #     if user_query == '' or user_query is None:
+                    #         user_query = key['name']
+                    #     data["user_query"] = user_query
 
                     data_list.append(data)
             return data_list
         except Exception as e:
             logger.error('Exception from get_job_details'.format(e.message))
             raise e
-            
+
 
 ''' Method to fetch job query
     This is little convoluted but only way I can find to parse query from job tracker

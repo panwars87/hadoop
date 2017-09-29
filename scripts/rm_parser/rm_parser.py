@@ -50,7 +50,6 @@ def set_logger(log_level):
 
 def main():
     logger.debug("Starting RM Parser main")
-    set_logger("debug")
 
     cdh_data = get_marketing_user_jobs()
     logger.info('Data is : {0}'.format(cdh_data))
